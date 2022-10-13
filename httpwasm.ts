@@ -1,5 +1,5 @@
-import { readFile } from 'fs/promises';
-import { AsyncLocalStorage } from 'async_hooks';
+import { readFile } from 'node:fs/promises';
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 import { NextFunction, Request, Response } from 'express';
 import { WASI } from 'wasi';
@@ -172,6 +172,12 @@ export default async (options: Options) => {
   httpHandler.setMemory(instance.exports['memory'] as WebAssembly.Memory);
 
   const handle = instance.exports['handle'] as () => void;
+
+  if (exports['_start']) {
+    wasi.start(instance);
+  } else if (exports['_initialize']) {
+    wasi.initialize(instance);
+  }
 
   return (req: Request, res: Response, next: NextFunction) => {
     const state = new RequestState(req, res, next);
